@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<title>good luck</title>
+
+    <style type="text/css">
+
+
+    </style>
+</head>
+<body>
+
+<div>
+<form action="/investigation/" method="POST">
+{% raw xsrf_form_html() %}
+<ul>
+<h2>调查问卷</h2>
+	{% for i in i_ques %}
+		<h4>{{ i_ques[i]['content'] }}</h4>
+		<div>
+				<input type="radio" name="{{ i }}" value="A" />&nbsp;非常满意<br>
+				<input type="radio" name="{{ i }}" value="B" />&nbsp;满意<br>
+				<input type="radio" name="{{ i }}" value="C" />&nbsp;比较满意<br>
+				<input type="radio" name="{{ i }}" value="D" />&nbsp;一般<br>
+				<input type="radio" name="{{ i }}" value="E" />&nbsp;不满意<br>
+		</div>
+	{% end %}
+</ul>
+<br/>
+
+<input type="submit" value="提交" />
+</form>
+</div>
+
+
+
+</body>
+</html>

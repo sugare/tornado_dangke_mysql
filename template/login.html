@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Login</title>
+    <link rel="stylesheet" type="text/css" href="/static/css/login.css"/>
+    <link rel="shortcut icon" type="image/x-icon" href="./favicon.ico" />
+</head>
+<body>
+    <div id="login">
+        <h1>Login</h1>
+        <form method="POST" action="/">
+            {% raw xsrf_form_html() %}
+            <input type="text" id='use' required="required" placeholder="用户名" name="username" autocomplete="off">
+            <input type="hidden">
+            <input id='pass' type="text" required="required" placeholder="密码" name="password" autocomplete="off"  onfocus="this.type='password'">
+            <button class="but" type="submit">登录</button>
+
+
+        </form>
+    </div>
+<script language="javascript">
+    window.load = function(){
+    document.getElementById('pass').value='';
+    };
+    window.load = function(){
+    document.getElementById('use').value='';
+    };
+</script>
+
+
+</body>
+</html>

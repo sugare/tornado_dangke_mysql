@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>考生成绩</title>
+    <link href="/static/css/score.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+<!-- Table goes in the document BODY -->
+<table class="hovertable">
+<tr>
+	<th>&nbsp;&nbsp;考生考号&nbsp;&nbsp;</th><th>&nbsp;考生姓名&nbsp;</th><th>&nbsp;单选成绩&nbsp;</th><th>&nbsp;多选成绩&nbsp;</th><th>&nbsp;判断成绩&nbsp;</th><th>&nbsp;总成绩&nbsp;</th>
+</tr>
+{% for i in s %}
+    <tr onmouseover="this.style.backgroundColor='#ffff66';" onmouseout="this.style.backgroundColor='#d4e3e5';">
+        <td>&nbsp;&nbsp;<a href="/score/{{ i['username'] }}">{{ i['username'] }}</a>&nbsp;</td>
+        <td>&nbsp;{{ i['user'] }}&nbsp;</td>
+        <td>&nbsp;{{ i['single'] }}&nbsp;</td>
+        <td>&nbsp;{{ i['multi'] }}&nbsp;</td>
+        <td>&nbsp;{{ i['judge'] }}&nbsp;</td>
+        <td>&nbsp;{{ i['total'] }}&nbsp;</td>
+    </tr>
+{% end %}
+
+</table>
+<h6><div><a href="/static/data/mask.xls">注:可点击考生考号查看考生成绩详细信息, 点击此处可下载成绩单</a></div></h6>
+
+</body>
+</html>

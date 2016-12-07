@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<title>good luck</title>
+
+    <style type="text/css">
+
+
+    </style>
+</head>
+<body>
+
+<div>
+<form action="/exam/" method="POST">
+{% raw xsrf_form_html() %}
+<ul>
+<h2>单选题</h2>
+	{% for i in s_ques %}
+		<h4>{{ s_ques[i].keys()[0] }}</h4>
+		<div>
+			{% for j in range(4) %}
+				<input type="radio" name="{{ i }}" value="{{ s_ques[i].values()[0][j]['mask'] }}" />&nbsp;{{ s_ques[i].values()[0][j]['content'] }}<br>
+			{% end %}
+		</div>
+	{% end %}
+</ul>
+
+<ul>
+<h2>多选题</h2>
+	{% for i in m_ques %}
+		<h4>{{ m_ques[i].keys()[0] }}</h4>
+		<div>
+			{% for j in range(4) %}
+				<input type="checkbox" name="{{ i }}" value="{{ m_ques[i].values()[0][j]['mask'] }}" />&nbsp;{{ m_ques[i].values()[0][j]['content'] }}<br>
+			{% end %}
+		</div>
+	{% end %}
+</ul>
+
+<ul>
+<h2>判断题</h2>
+	{% for i in j_ques %}
+		<h4>{{ j_ques[i].keys()[0] }}</h4>
+		<div>
+				<input type="radio" name="{{ i }}" value="A" />&nbsp;正确<br>
+                <input type="radio" name="{{ i }}" value="B" />&nbsp;错误<br>
+		</div>
+	{% end %}
+</ul>
+<br/>
+
+<input type="submit" value="交卷" />
+</form>
+</div>
+
+
+
+</body>
+</html>

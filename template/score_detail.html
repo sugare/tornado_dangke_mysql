@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>考生成绩明细</title>
+    <link href="/static/css/score.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+
+<!-- Table goes in the document BODY -->
+<table class="hovertable">
+<tr>
+	<th>&nbsp;&nbsp;题号&nbsp;&nbsp;</th><th>&nbsp;考生答案&nbsp;</th><th>&nbsp;正确答案&nbsp;</th>
+</tr>
+{% for i in s %}
+<tr onmouseover="this.style.backgroundColor='#ffff66';" onmouseout="this.style.backgroundColor='#d4e3e5';">
+	<td>&nbsp;&nbsp;{{ i['qid'] }}&nbsp;</td><td>&nbsp;{{ i['rec'] }}&nbsp;</td><td>&nbsp;{{ i['ans'] }}&nbsp;</td>
+    {% end %}
+</tr>
+</table>
+<h6><div>提示：s 开头代表是单选，m 开头代表多选，j 开头代表判断，如 s13:代表题库中单选题的第13题</div></h6>
+</body>
+</html>
