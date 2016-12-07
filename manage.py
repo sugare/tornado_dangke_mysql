@@ -15,7 +15,7 @@ import tornado.httpserver
 from updata import downloadMask
 
 from tornado.options import define, options
-define("port", default=80, help="run on the given port", type=int)
+define("port", default=8888, help="run on the given port", type=int)
 define("mysql_host", default="127.0.0.1:3306", help="dang database host")
 define("mysql_database", default="dang", help="dang database name")
 define("mysql_user", default="dang", help="dang database user")
@@ -106,28 +106,17 @@ class ExamHandler(BaseHandler):
 
     @tornado.web.authenticated
     def get(self):
-        s_ques = {}
-        m_ques = {}
-        j_ques = {}
-        for i in self.quesNum('s'):
-            s_ques[i] = dict()
-            q = self.db.get('select content from question WHERE qid="%s";' % i)
-            s = self.db.query('select mask, content from choice WHERE ques_id="%s";' % i)
-            s_ques[i][q['content']] = s
+        s = {'rubbish':'s'}
+        m = {'rubbish':'m'}
+        j = {'rubbish':'j'}
+        for i in (s, m, j):
+            for k in self.quesNum(i.pop('rubbish')):
+                i[k] = dict()
+                x = self.db.get('select content from question WHERE qid="%s";' % k)
+                y = self.db.query('select mask, content from choice WHERE ques_id="%s";' % k)
+                i[k][x['content']] = y
 
-        for i in self.quesNum('m'):
-            m_ques[i] = dict()
-            q = self.db.get('select content from question WHERE qid="%s";' % i)
-            s = self.db.query('select mask, content from choice WHERE ques_id="%s";' % i)
-            m_ques[i][q['content']] = s
-
-        for i in self.quesNum('j'):
-            j_ques[i] = dict()
-            q = self.db.get('select content from question WHERE qid="%s";' % i)
-            s = self.db.query('select mask from choice WHERE ques_id="%s";' % i)
-            j_ques[i][q['content']] = s
-
-        self.render('exam.html', user=self.current_user, s_ques=s_ques, m_ques=m_ques, j_ques=j_ques, )
+        self.render('exam.html', user=self.current_user, s_ques=s, m_ques=m, j_ques=j, )
 
     @tornado.web.authenticated
     def post(self):
