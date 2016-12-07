@@ -13,6 +13,9 @@ import torndb
 import tornado.web
 import tornado.httpserver
 from updata import downloadMask
+from concurrent.futures import ThreadPoolExecutor
+import tornado.gen
+
 
 from tornado.options import define, options
 define("port", default=8888, help="run on the given port", type=int)
@@ -46,9 +49,9 @@ class Application(tornado.web.Application):
             host=options.mysql_host, database=options.mysql_database,
             user=options.mysql_user, password=options.mysql_password)
 
-        self.maybeCreateTables()
+        self.createTables()
 
-    def maybeCreateTables(self):
+    def createTables(self):
         try:
             self.db.get("SELECT COUNT(*) from users;")
         except MySQLdb.ProgrammingError:
@@ -61,6 +64,16 @@ class Application(tornado.web.Application):
 
 
 class BaseHandler(tornado.web.RequestHandler):
+
+    executor = ThreadPoolExecutor(2)
+
+    def query(self, sql):
+        sen = self.db.query(sql)
+        return sen
+
+    def exesql(self, sql):
+        self.db.execute(sql)
+
     @property       # 将db方法变为属性
     def db(self):
         return self.application.db
@@ -76,15 +89,19 @@ class LoginHandler(BaseHandler):
     def get(self):
         self.render('login.html')
 
+    @tornado.gen.coroutine
     def post(self):
         username = self.get_argument('username', '')
         password = self.get_argument('password', '')
-        u = self.db.query('select * from rec where uid = "%s"' % username)
+        sql = 'select * from rec where uid = "%s"' % username
+        u = yield self.executor.submit(self.query,sql)
         if u:
             self.write(u'您已经提交试卷！')
+            self.finish()
         else:
             sql = 'select username,password from users where username="%s" and password="%s";' % (username, password)
-            if self.db.get(sql):
+            v = yield self.executor.submit(self.query,sql)
+            if v:
                 self.set_secure_cookie("username", username)
                 self.redirect('/exam')
             else:
@@ -105,6 +122,7 @@ class ExamHandler(BaseHandler):
         return map(lambda num: ty+num, Q)
 
     @tornado.web.authenticated
+    @tornado.gen.coroutine
     def get(self):
         s = {'rubbish':'s'}
         m = {'rubbish':'m'}
@@ -112,13 +130,16 @@ class ExamHandler(BaseHandler):
         for i in (s, m, j):
             for k in self.quesNum(i.pop('rubbish')):
                 i[k] = dict()
-                x = self.db.get('select content from question WHERE qid="%s";' % k)
-                y = self.db.query('select mask, content from choice WHERE ques_id="%s";' % k)
-                i[k][x['content']] = y
+                sql1 = 'select content from question WHERE qid="%s";' % k
+                x = yield self.executor.submit(self.query, sql1)
+                sql2 = 'select mask, content from choice WHERE ques_id="%s";' % k
+                y = yield self.executor.submit(self.query, sql2)
+                i[k][x[0]['content']] = y
 
         self.render('exam.html', user=self.current_user, s_ques=s, m_ques=m, j_ques=j, )
 
     @tornado.web.authenticated
+    @tornado.gen.coroutine
     def post(self):
         s_mask = 0
         m_mask = 0
@@ -128,9 +149,11 @@ class ExamHandler(BaseHandler):
         self.request.arguments.pop('_xsrf')
         for i in self.request.arguments:
             user_rec = ''.join(self.request.arguments[i])
-            answer = self.db.get('select answer from question WHERE qid="%s";' % i)['answer']
-            self.db.execute('insert into rec(uid, qid, rec, ans) VALUES("%s", "%s", "%s", "%s");' % (self.get_secure_cookie('username'), i, user_rec, answer))
-            if user_rec == answer:
+            sql = 'select answer from question WHERE qid="%s";' % i
+            answer = yield self.executor.submit(self.query, sql)
+            sql1 = 'insert into rec(uid, qid, rec, ans) VALUES("%s", "%s", "%s", "%s");' % (self.get_secure_cookie('username'), i, user_rec, answer[0]['answer'])
+            yield self.executor.submit(self.exesql, sql1)
+            if user_rec == answer[0]['answer']:
                 if 's' in i:
                     s_mask += 2
                 elif 'm' in i:
@@ -139,8 +162,10 @@ class ExamHandler(BaseHandler):
                     j_mask += 2
 
         total = s_mask + m_mask + j_mask
-        user = self.db.get('select user from users where username="%s";' % self.get_secure_cookie('username'))['user']
-        self.db.execute('insert into score(username,user,single,multi,judge,total) VALUES("%s", "%s", %d, %d, %d, %d);' % (self.get_secure_cookie('username'), user, s_mask, m_mask, j_mask, total))
+        sql = 'select user from users where username="%s";' % self.get_secure_cookie('username')
+        user = yield self.executor.submit(self.query, sql)
+        sql1 = 'insert into score(username,user,single,multi,judge,total) VALUES("%s", "%s", %d, %d, %d, %d);' % (self.get_secure_cookie('username'), user[0]['user'], s_mask, m_mask, j_mask, total)
+        yield self.executor.submit(self.exesql, sql1)
         self.redirect('/investigation')
 
 class LogoutHandler(BaseHandler):
@@ -151,30 +176,41 @@ class LogoutHandler(BaseHandler):
 
 
 class InvestigationHandler(ExamHandler):
+
+    @tornado.gen.coroutine
     def get(self):
         i_ques = {}
         for i in self.quesNum('i'):
-            q = self.db.get('select content from survey WHERE qid="%s";' % i)
-            i_ques[i] = q
+            sql = 'select content from survey WHERE qid="%s";' % i
+            q = yield self.executor.submit(self.query, sql)
+            i_ques[i] = q[0]
         self.render('invest.html', i_ques=i_ques)
 
+    @tornado.gen.coroutine
     def post(self):
         self.request.arguments.pop('_xsrf')
         for i in ('i1', 'i2' ,'i3' ,'i4', 'i5'):
             v = self.get_argument(i,'A')
-            self.db.execute('update survey set %s = %s + 1 WHERE qid="%s";' % (v,v, i))
+            sql = 'update survey set %s = %s + 1 WHERE qid="%s";' % (v,v, i)
+            yield self.executor.submit(self.exesql, sql)
         self.redirect('/logout')
 
 
 class ScoreHandler(ExamHandler):
+
+    @tornado.gen.coroutine
     def get(self, slug=''):
         downloadMask()
-        if slug == '':
-            s = self.db.query('select * from score;')
-            self.render('score.html', s=s)
-        else:
-            s = self.db.query('select * from rec WHERE uid="%s";' % slug)
+        if slug:
+            sql = 'select * from rec WHERE uid="%s";' % slug
+            s = yield self.executor.submit(self.query, sql)
             self.render('score_detail.html', s=s)
+        else:
+            sql = 'select * from score;'
+            s = yield self.executor.submit(self.query, sql)
+            self.render('score.html', s=s)
+
+
 
 
 def main():
