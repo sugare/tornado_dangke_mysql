@@ -1,13 +1,13 @@
-python 2.7.12\n
-tornado 4.4.2\n
-mysql 5.6\n
+python 2.7.12<br/>
+tornado 4.4.2<br/>
+mysql 5.6<br/>
 
-pip install tornado\n
-pip install torndb
-pip install xlrd
-pip install xlwt
-pip install futures
-sudo apt-get install python-mysqldb
+pip install tornado<br/>
+pip install torndb<br/>
+pip install xlrd<br/>
+pip install xlwt<br/>
+pip install futures<br/>
+sudo apt-get install python-mysqldb<br/>
 
 
 # 创建库
