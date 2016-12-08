@@ -9,13 +9,15 @@ pip install xlwt<br/>
 pip install futures<br/>
 sudo apt-get install python-mysqldb<br/>
 
-
+#
 # 创建库
 CREATE DATABASE dang DEFAULT CHARACTER SET utf8;
 
+#
 # 给予权限
 GRANT ALL PRIVILEGES ON dang.* TO 'dang'@'localhost' IDENTIFIED BY 'dang';
 
+#
 # 进入schema.sql坐在目录， 创建表
 mysql --user=dang --password=dang --database=dang < schema.sql
 
