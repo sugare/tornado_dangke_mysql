@@ -21,14 +21,18 @@ GRANT ALL PRIVILEGES ON dang.* TO 'dang'@'localhost' IDENTIFIED BY 'dang';
 # 进入schema.sql坐在目录， 创建表
 mysql --user=dang --password=dang --database=dang < schema.sql
 
+#
 # 上传题库和用户
 python updata.py
 
+#
 # 运行程序
 python manage.py
 
+#
 # 开始考试
 http://IP/
 
+#
 # 查看成绩
 http://IP/score
