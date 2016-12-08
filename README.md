@@ -18,7 +18,7 @@ CREATE DATABASE dang DEFAULT CHARACTER SET utf8;
 GRANT ALL PRIVILEGES ON dang.* TO 'dang'@'localhost' IDENTIFIED BY 'dang';
 
 #
-# 进入schema.sql坐在目录， 创建表
+# 进入schema.sql所在目录， 创建表
 mysql --user=dang --password=dang --database=dang < schema.sql
 
 #
