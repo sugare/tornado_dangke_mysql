@@ -5,6 +5,7 @@
 # @Site    : 
 # @File    : manage.py
 # @Software: PyCharm
+import time
 import random
 import MySQLdb
 import os.path
@@ -15,7 +16,9 @@ import tornado.httpserver
 from updata import downloadMask
 from concurrent.futures import ThreadPoolExecutor
 import tornado.gen
-
+import Queue
+import os
+import threading
 
 from tornado.options import define, options
 define("port", default=8888, help="run on the given port", type=int)
@@ -67,6 +70,15 @@ class BaseHandler(tornado.web.RequestHandler):
 
     executor = ThreadPoolExecutor(2)
 
+
+
+
+
+
+    @property       # 将db方法变为属性
+    def db(self):
+        return self.application.db
+
     def query(self, sql):
         sen = self.db.query(sql)
         return sen
@@ -74,9 +86,8 @@ class BaseHandler(tornado.web.RequestHandler):
     def exesql(self, sql):
         self.db.execute(sql)
 
-    @property       # 将db方法变为属性
-    def db(self):
-        return self.application.db
+
+
 
     def get_current_user(self):
         user_id = self.get_secure_cookie("username")
@@ -86,9 +97,11 @@ class BaseHandler(tornado.web.RequestHandler):
 
 
 class LoginHandler(BaseHandler):
+    @tornado.web.asynchronous
     def get(self):
         self.render('login.html')
 
+    @tornado.web.asynchronous
     @tornado.gen.coroutine
     def post(self):
         username = self.get_argument('username', '')
@@ -122,6 +135,7 @@ class ExamHandler(BaseHandler):
         return map(lambda num: ty+num, Q)
 
     @tornado.web.authenticated
+    @tornado.web.asynchronous
     @tornado.gen.coroutine
     def get(self):
         s = {'rubbish':'s'}
@@ -139,6 +153,7 @@ class ExamHandler(BaseHandler):
         self.render('exam.html', user=self.current_user, s_ques=s, m_ques=m, j_ques=j, )
 
     @tornado.web.authenticated
+    @tornado.web.asynchronous
     @tornado.gen.coroutine
     def post(self):
         s_mask = 0
@@ -146,12 +161,29 @@ class ExamHandler(BaseHandler):
         j_mask = 0
         total = 0
 
+        def worker(q):
+            while True:
+                sql = q.get()
+                print '%s' % sql
+                #self.db.execute(sql)
+                q.task_done()
+
+
+        q = Queue.Queue()
+        for i in range(1):
+            t = threading.Thread(target=worker, args=(q,))
+            t.daemon = True
+            t.start()
+
+
         self.request.arguments.pop('_xsrf')
+
         for i in self.request.arguments:
             user_rec = ''.join(self.request.arguments[i])
             sql = 'select answer from question WHERE qid="%s";' % i
             answer = yield self.executor.submit(self.query, sql)
             sql1 = 'insert into rec(uid, qid, rec, ans) VALUES("%s", "%s", "%s", "%s");' % (self.get_secure_cookie('username'), i, user_rec, answer[0]['answer'])
+            #q.put(sql1)
             yield self.executor.submit(self.exesql, sql1)
             if user_rec == answer[0]['answer']:
                 if 's' in i:
@@ -161,29 +193,26 @@ class ExamHandler(BaseHandler):
                 else:
                     j_mask += 2
 
+
         total = s_mask + m_mask + j_mask
         sql = 'select user from users where username="%s";' % self.get_secure_cookie('username')
         user = yield self.executor.submit(self.query, sql)
-        sql1 = 'insert into score(username,user,single,multi,judge,total) VALUES("%s", "%s", %d, %d, %d, %d);' % (self.get_secure_cookie('username'), user[0]['user'], s_mask, m_mask, j_mask, total)
-        yield self.executor.submit(self.exesql, sql1)
+        sql2 = 'insert into score(username,user,single,multi,judge,total) VALUES("%s", "%s", %d, %d, %d, %d);' % (self.get_secure_cookie('username'), user[0]['user'], s_mask, m_mask, j_mask, total)
+        # q.put(sql2)
+        yield self.executor.submit(self.exesql, sql2)
         self.redirect('/investigation')
-
-class LogoutHandler(BaseHandler):
-    def get(self):
-        self.clear_cookie("username")
-        self.write(u'交卷成功！')
-        self.redirect(self.get_argument("next", "/"), )
-
+        # q.join()
 
 class InvestigationHandler(ExamHandler):
-
     @tornado.gen.coroutine
     def get(self):
         i_ques = {}
         for i in self.quesNum('i'):
             sql = 'select content from survey WHERE qid="%s";' % i
+            # q = self.query(sql)
             q = yield self.executor.submit(self.query, sql)
             i_ques[i] = q[0]
+
         self.render('invest.html', i_ques=i_ques)
 
     @tornado.gen.coroutine
@@ -196,18 +225,23 @@ class InvestigationHandler(ExamHandler):
         self.redirect('/logout')
 
 
-class ScoreHandler(ExamHandler):
+class LogoutHandler(BaseHandler):
+    def get(self):
+        self.clear_cookie("username")
+        self.write(u'交卷成功！')
+        self.redirect(self.get_argument("next", "/"), )
 
-    @tornado.gen.coroutine
+
+class ScoreHandler(ExamHandler):
     def get(self, slug=''):
         downloadMask()
         if slug:
             sql = 'select * from rec WHERE uid="%s";' % slug
-            s = yield self.executor.submit(self.query, sql)
+            s = self.query(sql)
             self.render('score_detail.html', s=s)
         else:
             sql = 'select * from score;'
-            s = yield self.executor.submit(self.query, sql)
+            s = self.query(sql)
             self.render('score.html', s=s)
 
 
