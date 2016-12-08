@@ -1,8 +1,8 @@
-python 2.7.12
-tornado 4.4.2
-mysql 5.6
+python 2.7.12\n
+tornado 4.4.2\n
+mysql 5.6\n
 
-pip install tornado
+pip install tornado\n
 pip install torndb
 pip install xlrd
 pip install xlwt
