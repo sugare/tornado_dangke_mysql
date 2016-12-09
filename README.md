@@ -1,6 +1,19 @@
+#
+#软件及版本
+```
 python 2.7.12<br/>
 tornado 4.4.2<br/>
 mysql 5.6<br/>
+```
+
+#
+#下载软件
+```
+git clone https://github.com/tornadoweb/tornado.git
+
+```
+#
+#安装需要包及库
 ```
 sudo pip install tornado
 sudo pip install torndb
@@ -9,51 +22,45 @@ sudo pip install xlwt
 sudo pip install futures
 sudo apt-get install python-mysqldb supervisor nginx
 ```
-
 #
-# 创建库
+#测试tornado
+1 创建库
 ```
 CREATE DATABASE dang DEFAULT CHARACTER SET utf8;
 ```
 
-#
-# 给予权限
+2 给予权限
 ```
 GRANT ALL PRIVILEGES ON dang.* TO 'dang'@'localhost' IDENTIFIED BY 'dang';
 ```
 
-#
-# 进入schema.sql所在目录， 创建表
+3 进入schema.sql所在目录， 创建表
 ```
 mysql --user=dang --password=dang --database=dang < schema.sql
 ```
 
-#
-# 上传题库和用户
+4 上传题库和用户
 ```
 python updata.py
 ```
 
-#
-# 运行程序
+5 运行程序
 ```
 python manage.py
 ```
 
-#
-# 开始考试
+6 开始考试
 ```
 http://IP/
 ```
 
-#
-# 查看成绩
+7 查看成绩
 ```
 http://IP/score
 ```
 
 #
-# 加入nginx和supervisor
+#加入nginx和supervisor
 
 1 复制conf/nginx.conf到/etc/nginx/nginx.conf
 ```Bash
