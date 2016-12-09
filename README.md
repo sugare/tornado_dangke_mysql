@@ -1,15 +1,15 @@
 #
 #软件及版本
 ```
-python 2.7.12<br/>
-tornado 4.4.2<br/>
-mysql 5.6<br/>
+python 2.7.12
+tornado 4.4.2
+mysql 5.6
 ```
 
 #
 #下载软件
 ```
-git clone https://github.com/tornadoweb/tornado.git
+git clone git@github.com:sugare/tornado_dangke.git
 
 ```
 #
