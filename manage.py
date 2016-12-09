@@ -56,7 +56,7 @@ class Application(tornado.web.Application):
 
     def createTables(self):
         try:
-            self.db.get("SELECT COUNT(*) from users;")
+            self.db.get("SELECT COUNT(*) FROM users;")
         except MySQLdb.ProgrammingError:
             subprocess.check_call(['mysql',
                                    '--host=' + options.mysql_host,
@@ -106,13 +106,13 @@ class LoginHandler(BaseHandler):
     def post(self):
         username = self.get_argument('username', '')
         password = self.get_argument('password', '')
-        sql = 'select * from rec where uid = "%s"' % username
+        sql = 'SELECT * from rec WHERE uid = "%s"' % username
         u = yield self.executor.submit(self.query,sql)
         if u:
             self.write(u'您已经提交试卷！')
             self.finish()
         else:
-            sql = 'select username,password from users where username="%s" and password="%s";' % (username, password)
+            sql = 'SELECT username,password FROM users WHERE username="%s" and password="%s";' % (username, password)
             v = yield self.executor.submit(self.query,sql)
             if v:
                 self.set_secure_cookie("username", username)
@@ -144,9 +144,9 @@ class ExamHandler(BaseHandler):
         for i in (s, m, j):
             for k in self.quesNum(i.pop('rubbish')):
                 i[k] = dict()
-                sql1 = 'select content from question WHERE qid="%s";' % k
+                sql1 = 'SELECT content FROM question WHERE qid="%s";' % k
                 x = yield self.executor.submit(self.query, sql1)
-                sql2 = 'select mask, content from choice WHERE ques_id="%s";' % k
+                sql2 = 'SELECT mask, content FROM choice WHERE ques_id="%s";' % k
                 y = yield self.executor.submit(self.query, sql2)
                 i[k][x[0]['content']] = y
 
@@ -180,9 +180,9 @@ class ExamHandler(BaseHandler):
 
         for i in self.request.arguments:
             user_rec = ''.join(self.request.arguments[i])
-            sql = 'select answer from question WHERE qid="%s";' % i
+            sql = 'SELECT answer FROM question WHERE qid="%s";' % i
             answer = yield self.executor.submit(self.query, sql)
-            sql1 = 'insert into rec(uid, qid, rec, ans) VALUES("%s", "%s", "%s", "%s");' % (self.get_secure_cookie('username'), i, user_rec, answer[0]['answer'])
+            sql1 = 'INSERT INTO rec(uid, qid, rec, ans) VALUES("%s", "%s", "%s", "%s");' % (self.get_secure_cookie('username'), i, user_rec, answer[0]['answer'])
             #q.put(sql1)
             yield self.executor.submit(self.exesql, sql1)
             if user_rec == answer[0]['answer']:
@@ -195,9 +195,9 @@ class ExamHandler(BaseHandler):
 
 
         total = s_mask + m_mask + j_mask
-        sql = 'select user from users where username="%s";' % self.get_secure_cookie('username')
+        sql = 'SELECT user FROM users WHERE username="%s";' % self.get_secure_cookie('username')
         user = yield self.executor.submit(self.query, sql)
-        sql2 = 'insert into score(username,user,single,multi,judge,total) VALUES("%s", "%s", %d, %d, %d, %d);' % (self.get_secure_cookie('username'), user[0]['user'], s_mask, m_mask, j_mask, total)
+        sql2 = 'INSERT INTO score(username,user,single,multi,judge,total) VALUES("%s", "%s", %d, %d, %d, %d);' % (self.get_secure_cookie('username'), user[0]['user'], s_mask, m_mask, j_mask, total)
         # q.put(sql2)
         yield self.executor.submit(self.exesql, sql2)
         self.redirect('/investigation')
@@ -208,7 +208,7 @@ class InvestigationHandler(ExamHandler):
     def get(self):
         i_ques = {}
         for i in self.quesNum('i'):
-            sql = 'select content from survey WHERE qid="%s";' % i
+            sql = 'SELECT content FROM survey WHERE qid="%s";' % i
             # q = self.query(sql)
             q = yield self.executor.submit(self.query, sql)
             i_ques[i] = q[0]
@@ -220,7 +220,7 @@ class InvestigationHandler(ExamHandler):
         self.request.arguments.pop('_xsrf')
         for i in ('i1', 'i2' ,'i3' ,'i4', 'i5'):
             v = self.get_argument(i,'A')
-            sql = 'update survey set %s = %s + 1 WHERE qid="%s";' % (v,v, i)
+            sql = 'UPDATE survey SET %s = %s + 1 WHERE qid="%s";' % (v,v, i)
             yield self.executor.submit(self.exesql, sql)
         self.redirect('/logout')
 
@@ -236,11 +236,11 @@ class ScoreHandler(ExamHandler):
     def get(self, slug=''):
         downloadMask()
         if slug:
-            sql = 'select * from rec WHERE uid="%s";' % slug
+            sql = 'SELECT * FROM rec WHERE uid="%s" ORDER BY qid;' % slug
             s = self.query(sql)
             self.render('score_detail.html', s=s)
         else:
-            sql = 'select * from score;'
+            sql = 'SELECT * FROM score ORDER BY -total;'
             s = self.query(sql)
             self.render('score.html', s=s)
 
