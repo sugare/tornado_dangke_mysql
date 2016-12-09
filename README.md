@@ -15,9 +15,12 @@ sudo apt-get install python-mysqldb supervisor nginx
 ```
 CREATE DATABASE dang DEFAULT CHARACTER SET utf8;
 ```
+
 #
 # 给予权限
+```
 GRANT ALL PRIVILEGES ON dang.* TO 'dang'@'localhost' IDENTIFIED BY 'dang';
+```
 
 #
 # 进入schema.sql所在目录， 创建表
@@ -45,8 +48,9 @@ http://IP/
 
 #
 # 查看成绩
+```
 http://IP/score
-
+```
 
 #
 # 加入nginx和supervisor
