@@ -41,27 +41,27 @@ http://IP/score
 #
 # 加入nginx和supervisor
 
-1. 复制conf/nginx.conf到/etc/nginx/nginx.conf
+1 复制conf/nginx.conf到/etc/nginx/nginx.conf
 ```Bash
 sudo cp conf/nginx.conf /etc/nginx/
 ```
 
-2. 复制conf/tornado.conf /etc/supervisor/conf.d/
+2 复制conf/tornado.conf /etc/supervisor/conf.d/
 ```
 sudp cp conf/tornado.conf /etc/supervisor/conf.d/
 ```
 
-3. 检查supervisor是否成功运行
+3 检查supervisor是否成功运行
 ```
    sudo supervisorctl
 ```
 
-4. 给予/var/www目录权限
+4 给予/var/www目录权限
 ```
 chown -R www-data /var/www 
 ```
 
-5. 检查nginx是否成功运行
+5 检查nginx是否成功运行
 ```
 http://IP
 ```
